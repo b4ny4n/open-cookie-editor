@@ -14,11 +14,14 @@ function cleanDomain(domain) {
 function deleteCookie(cookie) {
   var urlMatch = getUrl(cookie);
   console.log("called to delete cookie from " + urlMatch);
-  chrome.cookies.remove({"url": urlMatch, "name": cookie.name});
+  chrome.cookies.remove({"url": urlMatch, "name": cookie.name}, function(val) { 
+    if (val != null) { 
+      console.log(val); messageToWindow("deleted cookie: " + cookie.name); 
+    } else { messageToWindow("unable to create cookie: " + cookie.name); }});  
 }
 
 function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie ) {
- deleteCookie(originalCookie);
+ // deleteCookie(originalCookie);
  chrome.cookies.set({
    "url": getUrl({"secure": secure, "domain": cleanDomain(domain), "path": path}),
    "name": name,
@@ -29,9 +32,21 @@ function createCookie(name, domain, value, path, sameSite, expirationDate, secur
    "httpOnly": httpOnly,
    "sameSite": sameSite,
    "expirationDate": parseInt(expirationDate)
- });    
+ }, function(val) { if (val != null ) {
+  console.log(val); messageToWindow("saved cookie " + name); 
+  } else {
+    messageToWindow("unable to save cookie " + name); 
+  };    
+});
 }
 
+
+function messageToWindow(message) {
+  document.querySelector("#status").innerText=message;
+  document.querySelector("#status").hidden = false;
+
+  setTimeout(function() { document.querySelector("#status").innerText=""; document.querySelector("#status").setAttribute("hidden",true);}, 3000);
+}
 
 
 function generalizeDomain(d) {
@@ -71,7 +86,7 @@ function escapeHtml(unsafe) {
 
 function clearCookies() {
   var table = document.querySelector("#cookiebox");
-  while (table.rows.length > 1) {
+  while (table.rows.length > 0) {
     table.deleteRow(table.rows.length - 1);
   }
 }
@@ -84,10 +99,10 @@ function cookieToId(cookie) {
 
 function cookieToHtml(cookie, rownum) {
     
-	  var rowChars = 15
+	  // var rowChars = 15
     
     var cols = [cookie.name, cookie.domain, cookie.value, cookie.path, cookie.sameSite, cookie.expirationDate];
-    var colids = ['name', 'domain', 'value', 'path', 'samesite', 'expirationdate'];
+    var colids = ['name', 'domain', 'value', 'path', 'samesite', 'expiration'];
         
 
     var boolCols = [cookie.secure, cookie.httpOnly];
@@ -95,67 +110,56 @@ function cookieToHtml(cookie, rownum) {
         
 
 
-    longestVal = rowChars
-    for (var v in cols) {
-      if (cols[v] != undefined && cols[v].length > longestVal) {
-        longestVal = cols[v].length
-      }
-    }
-	  rowsVal = Math.ceil(cookie.value.length / rowChars);
-	  var table = document.querySelector("#cookiebox");
-      var row = table.insertRow(-1);
+    // longestVal = rowChars
+    // for (var v in cols) {
+    //   if (cols[v] != undefined && cols[v].length > longestVal) {
+    //     longestVal = cols[v].length
+    //   }
+    // }
 
-      // action column
+	  // rowsVal = Math.ceil(cookie.value.length / rowChars);
+	  
+    var table = document.querySelector("#cookiebox");
+
       
-      // delete button
-      var cell = row.insertCell(-1);
-      var deleteButton = document.createElement("button");
-      deleteButton.innerText = "del";
-      deleteButton.onclick = function() {
-        deleteCookie(cookie);
-        onChangeState();
-      }
-      cell.appendChild(deleteButton);
-
-
-      // save button
-      
-      var saveButton = document.createElement("button");
-      saveButton.innerText = "save";
-      saveButton.onclick = function() {
-        //deleteCookie(cookie);
-        newName = document.querySelector("#name" + rownum).value;
-        newDomain =  document.querySelector("#domain" + rownum).value;
-        newValue =  document.querySelector("#value" + rownum).value;
-        newPath =  document.querySelector("#path" + rownum).value;
-        newExpirationDate =  document.querySelector("#expirationdate" + rownum).value;
-        newSecure =  document.querySelector("#secure" + rownum).checked;
-        newHttpOnly =  document.querySelector("#httponly" + rownum).checked;
-        newSameSite =  document.querySelector("#samesite" + rownum).value;
-        createCookie(newName, newDomain, newValue, newPath, newSameSite, newExpirationDate, newSecure, newHttpOnly, cookie ) ;
-        onChangeState();
-      }
-      cell.appendChild(saveButton);
-
-
 
       for (var i in cols) {
-      	var cell = row.insertCell(-1);
+
+        var row = table.insertRow(-1);
+        var cell = row.insertCell(-1);
+        var label = document.createElement("div")
+        label.innerText = colids[i];
+        cell.appendChild(label);
+      	
+        var cell = row.insertCell(-1);
       	var div = document.createElement("div");
       	div.setAttribute("class", "flex-container");
 
       	var input = document.createElement("textarea");
       	input.setAttribute("class","fill-width");
-      	input.setAttribute("rows", rowsVal);
+      	input.setAttribute("rows", 1);
         input.setAttribute("id", colids[i]+rownum)
       	input.value = cols[i];
       	cell.appendChild(div)
       	div.appendChild(input);
       }
 
+      // new row for booleans:
+      var row = table.insertRow(-1);
+      var cell = row.insertCell(-1);
+      var label = document.createElement("div")
+      label.innerText = "flags";
+      cell.appendChild(label);
+      var cell = row.insertCell(-1);
+
       for (var i in boolCols) {
-        var cell = row.insertCell(-1);
         
+        var label = document.createElement("div")
+        label.setAttribute("class", "checkbox-inline");
+        label.setAttribute("for", boolColids[i]);
+        label.innerText = boolColids[i]
+        cell.appendChild(label);
+      
         var input = document.createElement("input");
         input.type="checkbox";
         input.setAttribute("id", boolColids[i]+rownum);
@@ -164,10 +168,58 @@ function cookieToHtml(cookie, rownum) {
         }
         cell.appendChild(input);
       }
+      
+      var row = table.insertRow(-1);
+      var cell = row.insertCell(-1);
+      
+    
+      
+      // delete button
+      var cell = row.insertCell(-1);
+      var div = document.createElement("div");
+      div.setAttribute("class","flex-container");
+
+      var deleteButton = document.createElement("button");
+      deleteButton.innerText = "\u{1f5d1}";
+      deleteButton.onclick = function() {
+        deleteCookie(cookie);
+        onChangeState();
+      }
+      div.appendChild(deleteButton);
+
+
+      // save button
+      // var cell = row.insertCell(-1);      
+      var saveButton = document.createElement("button");
+      saveButton.innerText = "\u{1F4BE}";
+      saveButton.onclick = function() {
+        //deleteCookie(cookie);
+        newName = document.querySelector("#name" + rownum).value;
+        newDomain =  document.querySelector("#domain" + rownum).value;
+        newValue =  document.querySelector("#value" + rownum).value;
+        newPath =  document.querySelector("#path" + rownum).value;
+        newExpirationDate =  document.querySelector("#expiration" + rownum).value;
+        newSecure =  document.querySelector("#secure" + rownum).checked;
+        newHttpOnly =  document.querySelector("#httponly" + rownum).checked;
+        newSameSite =  document.querySelector("#samesite" + rownum).value;
+        createCookie(newName, newDomain, newValue, newPath, newSameSite, newExpirationDate, newSecure, newHttpOnly, cookie ) ;
+        onChangeState();
+      }
+      div.appendChild(saveButton);
+      cell.appendChild(div);
+
+
+      var row = table.insertRow(-1);
+      var cell = row.insertCell(-1);
+      var cell = row.insertCell(-1);
+      var hr = document.createElement("hr")
+      cell.appendChild(hr);
+
+
 }
 
 function renderCookie(cookie, rownum) {
-  console.log(cookie);
+  //console.log(cookie);
    cookieToHtml(cookie, rownum)
 }
 

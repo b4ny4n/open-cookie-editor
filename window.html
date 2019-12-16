@@ -1,9 +1,11 @@
 <!DOCTYPE html>
   <html>
     <head>
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
       <style>
 
-      	html {overflow-y: scroll;}
+      	html {overflow-y: scroll; padding: 10px}
 
         button {
           outline: none;
@@ -11,49 +13,61 @@
         }
 
 		table.fixed {table-layout:fixed; width:550px;word-break:break-all;}
-		table.fixed td {overflow:hidden; text-align: center; padding:1px;}
-		table.fixed td:nth-of-type(1) {width:50px;}
-		table.fixed td:nth-of-type(2) {width:50px;}
-		table.fixed td:nth-of-type(3) {width:120px;}
-		table.fixed td:nth-of-type(4) {width:120px;}
-		table.fixed td:nth-of-type(5) {width:50px;}
-		table.fixed td:nth-of-type(6) {width:50px;}
-		table.fixed td:nth-of-type(7) {width:50px;}
-		table.fixed td:nth-of-type(8) {width:30px;}
-		table.fixed td:nth-of-type(9) {width:30px;}
+		table.fixed td {overflow:hidden; text-align: center; padding:5px;}
 		
+    table.fixed td:nth-of-type(1) {width:80px; text-align: right; vertical-align: top; padding-top: 8px}
+		table.fixed td:nth-of-type(2) {width:470px; text-align: left}
+
+
+    textarea.name {
+      font-weight: bold;
+    }
 
 
 		.flex-container {
 		  display: flex;
 		}
+    .flex-container-right {
+      display: flex;
+      text-align: right;
+    }
+
 
 		.fill-width {
   		  flex: 1;
 		}
 
+    .status {
+      background-color: #e6e6e6;
+      border-color: black;
+      border-width: 1px;
+      border-style: solid;
+      padding: 10px;
+    }
+
+    
+
       </style>
-    <script src="fun-ui.js"></script>
-    <script src="fun.js"></script>
+        <script src="fun-ui.js"></script>
+        <script src="fun.js"></script>
+
     </head>
     
     <body>
-    	<div id="status"></div>
+      <div id="menu" align="right">
+      
+      <label for="domainFilter">lookup domains matching</label>
     	<input id="domainFilter"></input>
-    	<button id="lookup">lookup</button>
-      <table id="cookiebox" width="300px" class="fixed">
-      	<tr>
-      		<td></td>
-      		<td>name</td>
-      		<td>domain</td>
-      		<td>value</td>
-      		<td>path</td>
-      		<td>same<br>site</td>
-			<td>expires</td>
-			<td>secure</td>
-			<td>http<br>only</td>
-			
-      	</tr>
+      <br>
+      <label for="cookieFilter">filter cookie name/value</label>
+      <input id="cookieFilter"></input>
+      <br>
+      <button id="search">search</button>
+      </div>
+      <div id="status" class="status" hidden=true></div>
+    
+    <hr>
+      <table id="cookiebox" class="fixed">
       </table>
     </body>
     
