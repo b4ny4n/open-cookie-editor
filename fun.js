@@ -8,7 +8,9 @@ function getUrl(cookie) {
 function cleanDomain(domain) {
   x = domain;
   if (x.startsWith(".")) { x = x.slice(1,x.length) }
+  console.log("domain was " + domain + " now returning as " + x);
   return x;
+
 }
 
 function deleteCookie(cookie) {
@@ -17,23 +19,31 @@ function deleteCookie(cookie) {
   chrome.cookies.remove({"url": urlMatch, "name": cookie.name}, function(val) { 
     if (val != null) { 
       console.log(val); messageToWindow("deleted cookie: " + cookie.name); 
-    } else { messageToWindow("unable to create cookie: " + cookie.name); }});  
+    } else { messageToWindow("unable to delete cookie: " + cookie.name); }});  
 }
 
 function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie ) {
- // deleteCookie(originalCookie);
- chrome.cookies.set({
+ deleteCookie(originalCookie);
+ payload = {
    "url": getUrl({"secure": secure, "domain": cleanDomain(domain), "path": path}),
    "name": name,
    "value": value,
-   "domain": domain,
+   // "domain": domain,
    "path": path,
    "secure": secure,
    "httpOnly": httpOnly,
    "sameSite": sameSite,
    "expirationDate": parseInt(expirationDate)
- }, function(val) { if (val != null ) {
-  console.log(val); messageToWindow("saved cookie " + name); 
+ }
+
+ // handle funny chrome api issue with leading . being forced if domain is specified (https://groups.google.com/a/chromium.org/forum/#!topic/chromium-extensions/9K5Auvrilbo)
+if (domain.startsWith(".")) {
+  payload["domain"] = domain
+}
+
+  chrome.cookies.set(payload, function(val) { 
+    if (val != null ) {
+      console.log(val); messageToWindow("saved cookie " + name); 
   } else {
     messageToWindow("unable to save cookie " + name); 
   };    
@@ -42,7 +52,7 @@ function createCookie(name, domain, value, path, sameSite, expirationDate, secur
 
 
 function messageToWindow(message) {
-  document.querySelector("#status").innerText=message;
+  document.querySelector("#status").innerText = document.querySelector("#status").innerText + message + "\n";
   document.querySelector("#status").hidden = false;
 
   setTimeout(function() { document.querySelector("#status").innerText=""; document.querySelector("#status").setAttribute("hidden",true);}, 3000);
