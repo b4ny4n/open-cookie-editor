@@ -85,7 +85,7 @@ function messageToWindow(message) {
   document.querySelector("#status").innerText = document.querySelector("#status").innerText + message + "\n";
   document.querySelector("#status").hidden = false;
 
-  setTimeout(function() { document.querySelector("#status").innerText=""; document.querySelector("#status").setAttribute("hidden",true);}, 3000);
+  setTimeout(function() { document.querySelector("#status").innerText=""; document.querySelector("#status").setAttribute("hidden",true);}, 1500);
 }
 
 
