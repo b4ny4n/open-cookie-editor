@@ -12,6 +12,11 @@
           margin: 5px;
         }
 
+    .countbox {
+      padding: 15px;
+      font-style: italic;
+    }
+
 		table.fixed {table-layout:fixed; width:550px;word-break:break-all;}
 		table.fixed td {overflow:hidden; text-align: center; padding:5px;}
 		
@@ -56,17 +61,18 @@
     <body>
       <div id="menu" align="right">
       
-      <label for="domainFilter">lookup domains matching</label>
-    	<input id="domainFilter"></input>
+      <label for="domainFilter">request scope</label>
+    	<input id="domainFilter" size=35></input>
       <br>
       <label for="cookieFilter">filter cookie name/value</label>
-      <input id="cookieFilter"></input>
+      <input id="cookieFilter" size=35></input>
       <br>
       <button id="search">search</button>
       </div>
       <div id="status" class="status" hidden=true></div>
     
     <hr>
+    <div id="cookiecount" class="countbox"></div>
       <table id="cookiebox" class="fixed">
       </table>
     </body>

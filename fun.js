@@ -22,6 +22,21 @@ function deleteCookie(cookie) {
     } else { messageToWindow("unable to delete cookie: " + cookie.name); }});  
 }
 
+
+function toDate(dateString) {
+  if (dateString == "") {
+    return undefined;
+  } else {
+    try {
+      var intVal = new Date(dateString).valueOf();
+      return intVal / 1000
+    } catch (error) {
+      console.log(error);
+      return undefined;
+    }
+  }
+}
+
 function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie ) {
  deleteCookie(originalCookie);
  payload = {
@@ -33,7 +48,7 @@ function createCookie(name, domain, value, path, sameSite, expirationDate, secur
    "secure": secure,
    "httpOnly": httpOnly,
    "sameSite": sameSite,
-   "expirationDate": parseInt(expirationDate)
+   "expirationDate": toDate(expirationDate)
  }
 
  // handle funny chrome api issue with leading . being forced if domain is specified (https://groups.google.com/a/chromium.org/forum/#!topic/chromium-extensions/9K5Auvrilbo)
@@ -45,7 +60,22 @@ if (domain.startsWith(".")) {
     if (val != null ) {
       console.log(val); messageToWindow("saved cookie " + name); 
   } else {
+    console.log(chrome.runtime.lastError);
     messageToWindow("unable to save cookie " + name); 
+    // attempt to restore original cookie
+    var op = {
+      "url": getUrl({"secure": originalCookie.secure, "domain": cleanDomain(originalCookie.domain), "path": originalCookie.path}),
+     "name": originalCookie.name,
+     "value": originalCookie.value,
+     // "domain": domain,
+     "path": originalCookie.path,
+     "secure": originalCookie.secure,
+     "httpOnly": originalCookie.httpOnly,
+     "sameSite": originalCookie.sameSite,
+     "expirationDate": originalCookie.expirationDate
+    };
+
+    chrome.cookies.set(op, function(val) { messageToWindow("attempted to restore cookie " + name); onChangeState();})
   };    
 });
 }
@@ -74,9 +104,10 @@ function populateCurrentDomain() {
   		  var url = new URL(tab.url);
   		  var domain = url.hostname;
   		  console.log("found domain: " + domain);
-        gen = generalizeDomain(domain);
-        console.log("generalized to domain: " + gen);
-        document.querySelector("#domainFilter").value = gen;
+        // gen = generalizeDomain(domain);
+        // console.log("generalized to domain: " + gen);
+        // document.querySelector("#domainFilter").value = gen;
+        document.querySelector("#domainFilter").value = domain;
         lookupCookies()
       } catch(error) {
         console.log(error)
@@ -109,7 +140,6 @@ function cookieToId(cookie) {
 
 function cookieToHtml(cookie, rownum) {
     
-	  // var rowChars = 15
     
     var cols = [cookie.name, cookie.domain, cookie.value, cookie.path, cookie.sameSite, cookie.expirationDate];
     var colids = ['name', 'domain', 'value', 'path', 'samesite', 'expiration'];
@@ -118,16 +148,6 @@ function cookieToHtml(cookie, rownum) {
     var boolCols = [cookie.secure, cookie.httpOnly];
     var boolColids = ['secure', 'httponly'];
         
-
-
-    // longestVal = rowChars
-    // for (var v in cols) {
-    //   if (cols[v] != undefined && cols[v].length > longestVal) {
-    //     longestVal = cols[v].length
-    //   }
-    // }
-
-	  // rowsVal = Math.ceil(cookie.value.length / rowChars);
 	  
     var table = document.querySelector("#cookiebox");
 
@@ -149,7 +169,16 @@ function cookieToHtml(cookie, rownum) {
       	input.setAttribute("class","fill-width");
       	input.setAttribute("rows", 1);
         input.setAttribute("id", colids[i]+rownum)
-      	input.value = cols[i];
+        if (colids[i] == 'expiration') {
+          if (cols[i] == undefined) {
+            input.value = "";  
+          } else {
+            input.value = new Date(cols[i]*1000).toISOString();
+          }
+        } else {
+          input.value = cols[i];  
+        }
+      	
       	cell.appendChild(div)
       	div.appendChild(input);
       }
@@ -244,17 +273,58 @@ function isFilterMatch(testvalue, filter) {
 }
 
 
+// foo.bar.com
+
+/*
+foo.bar.com
+.foo.bar.com
+.bar.com
+
+
+
+
+NOT
+bar.com
+baz.bar.com
+
+
+*/
+
 function ingestWithDomainFilter(cookies, domainFilter) {
-	for (var i in cookies) {
-     	//  console.log(cookies[i]);
-     	if (isFilterMatch(cookies[i].domain, domainFilter)) {
-      		renderCookie(cookies[i], i);
-       	}
+ var cookieCount = 0;
+ var subCookieCount = 0;
+
+  for (var i in cookies) {
+
+     	// if ( isFilterMatch(cookies[i].domain, domainFilter) ) {
+      // 		renderCookie(cookies[i], i);
+      // }
+      // trim any leading .
+
+
+      if ( cookies[i].domain.toLowerCase() == domainFilter.toLowerCase() || cookies[i].domain.toLowerCase() == "." + domainFilter.toLowerCase()) {
+        renderCookie(cookies[i], i);
+        cookieCount += 1;
+        subCookieCount += 1;
+      }
+       else if (cookies[i].domain.startsWith(".") && isFilterMatch(domainFilter, cookies[i].domain)) {
+          renderCookie(cookies[i], i);   
+          cookieCount += 1;
+
+      } else if (domainFilter.startsWith(".") && isFilterMatch(cookies[i].domain, domainFilter) ) {
+          renderCookie(cookies[i], i);
+          cookieCount += 1;
+
+      }
+  
     }
+    document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in overall scope\n" +  "found " + subCookieCount + " cookie(s) for this subdomain";
 }
 
+
+
 function cookieSort(cookieArray) {
-  cookieArray.sort((a, b) => (a.domain + a.name> b.domain + b.name) ? 1 : -1)
+  cookieArray.sort((a, b) => (a.domain + a.name> b.domain + b.name) ? -1 : 1)
 }
 
 function onChangeState() {
