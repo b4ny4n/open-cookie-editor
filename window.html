@@ -1,6 +1,7 @@
 <!DOCTYPE html>
   <html>
     <head>
+      <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 
       <style>
@@ -13,7 +14,6 @@
         }
 
     .countbox {
-      padding: 15px;
       font-style: italic;
     }
 
@@ -23,6 +23,9 @@
     table.fixed td:nth-of-type(1) {width:80px; text-align: right; vertical-align: top; padding-top: 8px}
 		table.fixed td:nth-of-type(2) {width:470px; text-align: left}
 
+    .tinybutton {
+      font-size: 8pt;
+    }
 
     textarea.name {
       font-weight: bold;
@@ -72,11 +75,35 @@
       <input id="cookieFilter" size=35></input>
       <br>
       <button id="search">search</button>
+      <button id="search" onclick="newCookieVisible()">new cookie</button>
       </div>
+      
+
+      <div id="cookiecreatediv" hidden=true>
+  <p><strong>create a cookie:</strong> </p>
+        <table id="cookiecreate" class="fixed ">
+          <tr><td>name</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiename"></textarea></div></td></tr>
+          <tr><td>domain</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiedomain"></textarea></div></td></tr>
+          <tr><td>value</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookievalue"></textarea></div></td></tr>
+          <tr><td>path</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiepath"></textarea></div></td></tr>
+          <tr><td>samesite</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiesamesite"></textarea></div></td></tr>
+          <tr><td>expiration</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookieexpiration"></textarea></div></td></tr>
+          <tr><td>flags</td><td><label class="checkbox-inline" for="newcookiesecure">secure</label><input rows=1 id="newcookiesecure" type="checkbox"></input><label  class="checkbox-inline" for="newcookiehttponly">httponly</label><input id="newcookiehttponly" type="checkbox"></input></td></tr>
+          <tr><td><button onclick=newCookieSubmit()>create</button></td><td></td></tr>
+      </table>
+      <hr>
+</div>
+
+
+    
       <div id="status" class="status" hidden=true></div>
     
-    <hr>
+
     <div id="cookiecount" class="countbox"></div>
+    <div id="filtercount" class="countbox"></div>
+    <br />
+        
+
       <table id="cookiebox" class="fixed">
       </table>
     </body>

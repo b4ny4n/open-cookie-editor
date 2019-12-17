@@ -1,9 +1,12 @@
+var cache = []
+
 
 function getUrl(cookie) {
   var newUrl =  "http" + (cookie.secure ? "s" : "") + "://" + cookie.domain + cookie.path;
   console.log(newUrl);
   return newUrl;
 }
+
 
 function cleanDomain(domain) {
   x = domain;
@@ -126,11 +129,18 @@ function escapeHtml(unsafe) {
 
 
 function clearCookies() {
+  var count = 0;
+  console.log("entering cookie clear!");
   var table = document.querySelector("#cookiebox");
   while (table.rows.length > 0) {
     table.deleteRow(table.rows.length - 1);
+    count += 1
   }
+
+  console.log("deleted " + count + " rows.");
 }
+
+
 
 function cookieToId(cookie) {
   return (cookie.name == undefined ? "" : cookie.name) + 
@@ -140,19 +150,15 @@ function cookieToId(cookie) {
 
 function cookieToHtml(cookie, rownum) {
     
-    
     var cols = [cookie.name, cookie.domain, cookie.value, cookie.path, cookie.sameSite, cookie.expirationDate];
     var colids = ['name', 'domain', 'value', 'path', 'samesite', 'expiration'];
         
-
     var boolCols = [cookie.secure, cookie.httpOnly];
     var boolColids = ['secure', 'httponly'];
-        
-	  
+
     var table = document.querySelector("#cookiebox");
 
       
-
       for (var i in cols) {
 
         var row = table.insertRow(-1);
@@ -169,6 +175,9 @@ function cookieToHtml(cookie, rownum) {
       	input.setAttribute("class","fill-width");
       	input.setAttribute("rows", 1);
         input.setAttribute("id", colids[i]+rownum)
+       
+
+        // handle expiration
         if (colids[i] == 'expiration') {
           if (cols[i] == undefined) {
             input.value = "";  
@@ -181,6 +190,103 @@ function cookieToHtml(cookie, rownum) {
       	
       	cell.appendChild(div)
       	div.appendChild(input);
+        
+        
+
+        if (colids[i] == 'value') {
+          
+
+          var origValue = cols[i];
+
+
+          // reset button
+          var resetButton = document.createElement("button")
+          resetButton.innerText = "\u{21BB}";
+          resetButton.setAttribute("class", "tinybutton");
+          resetButton.onclick = function() {
+              document.querySelector("#value" + rownum).value = origValue;
+          }
+          
+
+          // url encode
+          var urlEncodeButton = document.createElement("button")
+          urlEncodeButton.innerText = "\u{2192}url";
+          urlEncodeButton.setAttribute("class", "tinybutton");
+
+          urlEncodeButton.onclick = function() {
+              var currentValue = document.querySelector("#value" + rownum).value;
+              try {
+                document.querySelector("#value" + rownum).value = encodeURIComponent(currentValue)
+              } catch (exception) {
+                messageToWindow("unable to url encode " + currentValue.slice(0,10) + "...");
+              }
+          }
+          
+
+          // url decode
+          var urlDecodeButton = document.createElement("button")
+          urlDecodeButton.innerText = "\u{2190}url";
+          urlDecodeButton.setAttribute("class", "tinybutton");
+
+          urlDecodeButton.onclick = function() {
+              var currentValue = document.querySelector("#value" + rownum).value;
+              try {
+                document.querySelector("#value" + rownum).value = decodeURIComponent(currentValue)
+              } catch (exception) {
+                messageToWindow("unable to url decode " + currentValue.slice(0,10) + "...");
+              }
+          }
+          
+
+
+          // url decode
+
+
+
+          // from base64
+          var decodeButton = document.createElement("button")
+          decodeButton.innerText = "\u{2190}b64";
+          decodeButton.setAttribute("class", "tinybutton");
+
+
+          decodeButton.onclick = function() {
+              var currentValue = document.querySelector("#value" + rownum).value;
+              try {
+                document.querySelector("#value" + rownum).value = atob(currentValue)
+              } catch (exception) {
+                messageToWindow("unable to base64 decode " + currentValue.slice(0,10) + "...");
+              }
+          }
+          
+          // to base64
+          var encodeButton = document.createElement("button")
+          encodeButton.innerText ="\u{2192}b64";
+          encodeButton.setAttribute("class", "tinybutton");
+
+
+          encodeButton.onclick = function() {
+              var currentValue = document.querySelector("#value" + rownum).value;
+              try {
+                document.querySelector("#value" + rownum).value = btoa(currentValue)
+              } catch (exception) {
+                messageToWindow("unable to base64 encode " + currentValue.slice(0,10) + "...");
+              }
+          }
+
+          cell.appendChild(resetButton);
+          cell.appendChild(encodeButton);
+          cell.appendChild(decodeButton);
+          cell.appendChild(urlEncodeButton);
+          cell.appendChild(urlDecodeButton);
+          
+          
+          input.value = cols[i];  
+
+
+
+
+        }
+
       }
 
       // new row for booleans:
@@ -193,7 +299,7 @@ function cookieToHtml(cookie, rownum) {
 
       for (var i in boolCols) {
         
-        var label = document.createElement("div")
+        var label = document.createElement("label")
         label.setAttribute("class", "checkbox-inline");
         label.setAttribute("for", boolColids[i]);
         label.innerText = boolColids[i]
@@ -273,52 +379,56 @@ function isFilterMatch(testvalue, filter) {
 }
 
 
-// foo.bar.com
+function renderCookiesFromCache(predicate) {
+  console.log("entering cookie re-render");
+   var cookieCount = 0;
+ 
+  clearCookies();
+  for (var i in cache) {
+    if (predicate != undefined && predicate != "") {
+     if (isFilterMatch(cache[i].value, predicate) || isFilterMatch(cache[i].name, predicate)) {
+        renderCookie(cache[i], i);  cookieCount += 1;
+      } 
+    } else {
+      renderCookie(cache[i], i);
+      cookieCount += 1;
+   }
+  }
 
-/*
-foo.bar.com
-.foo.bar.com
-.bar.com
+  document.querySelector("#filtercount").innerText =  cookieCount +  " cookie(s) matched filter\n";
 
+}
 
-
-
-NOT
-bar.com
-baz.bar.com
-
-
-*/
 
 function ingestWithDomainFilter(cookies, domainFilter) {
+ cache = []
  var cookieCount = 0;
  var subCookieCount = 0;
 
   for (var i in cookies) {
 
-     	// if ( isFilterMatch(cookies[i].domain, domainFilter) ) {
-      // 		renderCookie(cookies[i], i);
-      // }
-      // trim any leading .
-
-
       if ( cookies[i].domain.toLowerCase() == domainFilter.toLowerCase() || cookies[i].domain.toLowerCase() == "." + domainFilter.toLowerCase()) {
-        renderCookie(cookies[i], i);
+        //renderCookie(cookies[i], i);
+        cache.push(cookies[i])
+
         cookieCount += 1;
         subCookieCount += 1;
       }
        else if (cookies[i].domain.startsWith(".") && isFilterMatch(domainFilter, cookies[i].domain)) {
-          renderCookie(cookies[i], i);   
+          // renderCookie(cookies[i], i);   
+          cache.push(cookies[i])
           cookieCount += 1;
+
 
       } else if (domainFilter.startsWith(".") && isFilterMatch(cookies[i].domain, domainFilter) ) {
-          renderCookie(cookies[i], i);
+          // renderCookie(cookies[i], i);
+          cache.push(cookies[i])
           cookieCount += 1;
-
       }
   
     }
-    document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in overall scope\n" +  "found " + subCookieCount + " cookie(s) for this subdomain";
+   document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in overall scope\n" +  "found " + subCookieCount + " cookie(s) for this subdomain\n";
+  renderCookiesFromCache(document.querySelector('#cookieFilter').value);
 }
 
 
