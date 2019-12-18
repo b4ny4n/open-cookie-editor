@@ -2,7 +2,7 @@
 ![](images/open-cookie-editor-128.png)
 
 ## A chromium cookie editor you can trust
-I don't trust many extensions which can read/write sensitive data from the browser, so I decided to write my own and open source the code. The codebase is intentionally small, offering a minimalist cookie editor which can be source-code reviewed in a few minutes.
+I don't trust many extensions which can read/write sensitive data from the browser, so I decided to write my own and opensource the code. The codebase is intentionally small, offering a minimalist cookie editor which can be source-code reviewed in a few minutes.
 
 ## Some (hopefully) useful features
 - edit/delete all aspects of existing cookies
