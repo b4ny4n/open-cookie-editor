@@ -40,8 +40,15 @@ function toDate(dateString) {
   }
 }
 
-function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie ) {
- deleteCookie(originalCookie);
+function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie, successCallback ) {
+ if (originalCookie != undefined) {
+    deleteCookie(originalCookie);
+  }
+
+if (sameSite == "") {
+  sameSite = "unspecified";
+}
+
  payload = {
    "url": getUrl({"secure": secure, "domain": cleanDomain(domain), "path": path}),
    "name": name,
@@ -55,6 +62,7 @@ function createCookie(name, domain, value, path, sameSite, expirationDate, secur
  }
 
  // handle funny chrome api issue with leading . being forced if domain is specified (https://groups.google.com/a/chromium.org/forum/#!topic/chromium-extensions/9K5Auvrilbo)
+ // here we use the .sub.tld convention to qualify non-host-only domain cookies
 if (domain.startsWith(".")) {
   payload["domain"] = domain
 }
@@ -62,23 +70,34 @@ if (domain.startsWith(".")) {
   chrome.cookies.set(payload, function(val) { 
     if (val != null ) {
       console.log(val); messageToWindow("saved cookie " + name); 
+      if (successCallback != undefined) {
+        successCallback();  
+      }
+      
   } else {
     console.log(chrome.runtime.lastError);
     messageToWindow("unable to save cookie " + name); 
     // attempt to restore original cookie
-    var op = {
-      "url": getUrl({"secure": originalCookie.secure, "domain": cleanDomain(originalCookie.domain), "path": originalCookie.path}),
-     "name": originalCookie.name,
-     "value": originalCookie.value,
-     // "domain": domain,
-     "path": originalCookie.path,
-     "secure": originalCookie.secure,
-     "httpOnly": originalCookie.httpOnly,
-     "sameSite": originalCookie.sameSite,
-     "expirationDate": originalCookie.expirationDate
-    };
+    if (originalCookie != undefined) {
+      var op = {
+        "url": getUrl({"secure": originalCookie.secure, "domain": cleanDomain(originalCookie.domain), "path": originalCookie.path}),
+       "name": originalCookie.name,
+       "value": originalCookie.value,
+       // "domain": domain,
+       "path": originalCookie.path,
+       "secure": originalCookie.secure,
+       "httpOnly": originalCookie.httpOnly,
+       "sameSite": originalCookie.sameSite,
+       "expirationDate": originalCookie.expirationDate
+      };
 
-    chrome.cookies.set(op, function(val) { messageToWindow("attempted to restore cookie " + name); onChangeState();})
+      if (originalCookie.domain.startsWith(".")) {
+        op["domain"] = originalCookie.domain;
+      }
+
+
+      chrome.cookies.set(op, function(val) { console.log(val); messageToWindow("attempted to restore cookie " + name); onChangeState();});
+  }
   };    
 });
 }
@@ -130,7 +149,6 @@ function escapeHtml(unsafe) {
 
 function clearCookies() {
   var count = 0;
-  console.log("entering cookie clear!");
   var table = document.querySelector("#cookiebox");
   while (table.rows.length > 0) {
     table.deleteRow(table.rows.length - 1);
@@ -148,6 +166,57 @@ function cookieToId(cookie) {
   (cookie.path  == undefined ? "" : cookie.path) + (cookie.secure  == undefined ? "" : cookie.secure) 
 }
 
+
+function deleteAllCookies() {
+  if (window.confirm("delete all cookies visible?")) {
+    for (var i in cache) {
+      deleteCookie(cache[i]);
+    }
+    onChangeState();
+  }
+}
+
+
+function newCookieVisible() {
+  console.log("making cookie section visible");
+  document.querySelector("#cookiecreatediv").hidden = false;
+}
+
+function cleanNewCookieFields() {
+    document.querySelector("#newcookiename").value = "";
+    document.querySelector("#newcookiedomain").value = "";
+    document.querySelector("#newcookievalue").value = "";
+    document.querySelector("#newcookiepath" ).value = "";
+    document.querySelector("#newcookieexpiration").value = "";
+    document.querySelector("#newcookiesecure").checked = false;
+    document.querySelector("#newcookiehttponly").checked = false;
+    document.querySelector("#newcookiesamesite").value = "";
+  
+}
+
+
+function createNewCookie() {
+
+  var newName = document.querySelector("#newcookiename").value;
+  var newDomain =  document.querySelector("#newcookiedomain").value;
+  var newValue =  document.querySelector("#newcookievalue").value;
+  var newPath =  document.querySelector("#newcookiepath" ).value;
+  var newExpirationDate =  document.querySelector("#newcookieexpiration").value;
+  var newSecure =  document.querySelector("#newcookiesecure").checked;
+  var newHttpOnly =  document.querySelector("#newcookiehttponly").checked;
+  var newSameSite =  document.querySelector("#newcookiesamesite").value;
+
+  createCookie(newName, newDomain, newValue, newPath, newSameSite, newExpirationDate, newSecure, newHttpOnly, undefined, function() {
+    document.querySelector("#cookiecreatediv").hidden = true;
+    cleanNewCookieFields();
+    onChangeState();
+  }) ;
+
+}
+  
+
+
+
 function cookieToHtml(cookie, rownum) {
     
     var cols = [cookie.name, cookie.domain, cookie.value, cookie.path, cookie.sameSite, cookie.expirationDate];
@@ -156,6 +225,12 @@ function cookieToHtml(cookie, rownum) {
     var boolCols = [cookie.secure, cookie.httpOnly];
     var boolColids = ['secure', 'httponly'];
 
+    var stripeColor = "#ffffff";
+
+    if (rownum % 2 == 0) {
+      stripeColor = "#e6e6e6";
+    }
+    
     var table = document.querySelector("#cookiebox");
 
       
@@ -163,12 +238,14 @@ function cookieToHtml(cookie, rownum) {
 
         var row = table.insertRow(-1);
         var cell = row.insertCell(-1);
-        var label = document.createElement("div")
+        
+        var label = document.createElement("div");
         label.innerText = colids[i];
         cell.appendChild(label);
       	
         var cell = row.insertCell(-1);
-      	var div = document.createElement("div");
+      	
+        var div = document.createElement("div");
       	div.setAttribute("class", "flex-container");
 
       	var input = document.createElement("textarea");
@@ -292,10 +369,13 @@ function cookieToHtml(cookie, rownum) {
       // new row for booleans:
       var row = table.insertRow(-1);
       var cell = row.insertCell(-1);
+      
+
       var label = document.createElement("div")
       label.innerText = "flags";
       cell.appendChild(label);
       var cell = row.insertCell(-1);
+      
 
       for (var i in boolCols) {
         
@@ -316,6 +396,7 @@ function cookieToHtml(cookie, rownum) {
       
       var row = table.insertRow(-1);
       var cell = row.insertCell(-1);
+      
       
     
       
@@ -356,9 +437,11 @@ function cookieToHtml(cookie, rownum) {
 
       var row = table.insertRow(-1);
       var cell = row.insertCell(-1);
+      
       var cell = row.insertCell(-1);
       var hr = document.createElement("hr")
       cell.appendChild(hr);
+      
 
 
 }
@@ -408,26 +491,23 @@ function ingestWithDomainFilter(cookies, domainFilter) {
   for (var i in cookies) {
 
       if ( cookies[i].domain.toLowerCase() == domainFilter.toLowerCase() || cookies[i].domain.toLowerCase() == "." + domainFilter.toLowerCase()) {
-        //renderCookie(cookies[i], i);
         cache.push(cookies[i])
 
         cookieCount += 1;
         subCookieCount += 1;
       }
        else if (cookies[i].domain.startsWith(".") && isFilterMatch(domainFilter, cookies[i].domain)) {
-          // renderCookie(cookies[i], i);   
           cache.push(cookies[i])
           cookieCount += 1;
 
 
       } else if (domainFilter.startsWith(".") && isFilterMatch(cookies[i].domain, domainFilter) ) {
-          // renderCookie(cookies[i], i);
           cache.push(cookies[i])
           cookieCount += 1;
       }
   
     }
-   document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in overall scope\n" +  "found " + subCookieCount + " cookie(s) for this subdomain\n";
+   document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in scope\n" +  "found " + subCookieCount + " matching subdomain\n";
   renderCookiesFromCache(document.querySelector('#cookieFilter').value);
 }
 

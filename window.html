@@ -75,12 +75,13 @@
       <input id="cookieFilter" size=35></input>
       <br>
       <button id="search">search</button>
-      <button id="search" onclick="newCookieVisible()">new cookie</button>
+      <button id="makecookiebutton">new cookie</button>
+      <a href="#" id="deleteall">delete all visible</a>
       </div>
       
 
       <div id="cookiecreatediv" hidden=true>
-  <p><strong>create a cookie:</strong> </p>
+        <p><strong>create a cookie:</strong> </p>
         <table id="cookiecreate" class="fixed ">
           <tr><td>name</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiename"></textarea></div></td></tr>
           <tr><td>domain</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiedomain"></textarea></div></td></tr>
@@ -89,12 +90,14 @@
           <tr><td>samesite</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiesamesite"></textarea></div></td></tr>
           <tr><td>expiration</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookieexpiration"></textarea></div></td></tr>
           <tr><td>flags</td><td><label class="checkbox-inline" for="newcookiesecure">secure</label><input rows=1 id="newcookiesecure" type="checkbox"></input><label  class="checkbox-inline" for="newcookiehttponly">httponly</label><input id="newcookiehttponly" type="checkbox"></input></td></tr>
-          <tr><td><button onclick=newCookieSubmit()>create</button></td><td></td></tr>
+          <tr><td></td><td><button id="createcookiebutton">create</button><button id="cancelcookiebutton">cancel</button></td></tr>
+          
       </table>
-      <hr>
-</div>
+    
+    </div>
 
-
+  <hr>
+    
     
       <div id="status" class="status" hidden=true></div>
     
