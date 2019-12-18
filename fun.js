@@ -1,6 +1,7 @@
 var cache = []
 
 
+// reconstruct a URL for the chrome API
 function getUrl(cookie) {
   var newUrl =  "http" + (cookie.secure ? "s" : "") + "://" + cookie.domain + cookie.path;
   console.log(newUrl);
@@ -8,6 +9,7 @@ function getUrl(cookie) {
 }
 
 
+// non-host-only cookies are returned with a "." before the (sub)domain, clean this up for URL construction
 function cleanDomain(domain) {
   x = domain;
   if (x.startsWith(".")) { x = x.slice(1,x.length) }
@@ -16,6 +18,7 @@ function cleanDomain(domain) {
 
 }
 
+// api wrapper for cookie deletion
 function deleteCookie(cookie) {
   var urlMatch = getUrl(cookie);
   console.log("called to delete cookie from " + urlMatch);
@@ -25,7 +28,7 @@ function deleteCookie(cookie) {
     } else { messageToWindow("unable to delete cookie: " + cookie.name); }});  
 }
 
-
+// go from datestring -> milliseconds -> epoch seconds
 function toDate(dateString) {
   if (dateString == "") {
     return undefined;
@@ -39,6 +42,7 @@ function toDate(dateString) {
     }
   }
 }
+
 
 function createCookie(name, domain, value, path, sameSite, expirationDate, secure , httpOnly, originalCookie, successCallback ) {
  if (originalCookie != undefined) {
@@ -77,7 +81,9 @@ if (domain.startsWith(".")) {
   } else {
     console.log(chrome.runtime.lastError);
     messageToWindow("unable to save cookie " + name); 
-    // attempt to restore original cookie
+    
+
+    // attempt to restore original cookie in a callback
     if (originalCookie != undefined) {
       var op = {
         "url": getUrl({"secure": originalCookie.secure, "domain": cleanDomain(originalCookie.domain), "path": originalCookie.path}),
@@ -91,34 +97,27 @@ if (domain.startsWith(".")) {
        "expirationDate": originalCookie.expirationDate
       };
 
+      // also need to handle non-host-only settings on callback
       if (originalCookie.domain.startsWith(".")) {
         op["domain"] = originalCookie.domain;
       }
 
 
       chrome.cookies.set(op, function(val) { console.log(val); messageToWindow("attempted to restore cookie " + name); onChangeState();});
-  }
-  };    
-});
+    }
+  }; });
 }
 
 
+// flash a message to the top of the extension
 function messageToWindow(message) {
   document.querySelector("#status").innerText = document.querySelector("#status").innerText + message + "\n";
   document.querySelector("#status").hidden = false;
-
   setTimeout(function() { document.querySelector("#status").innerText=""; document.querySelector("#status").setAttribute("hidden",true);}, 1500);
 }
 
 
-function generalizeDomain(d) {
-  var splt = d.split(".")
-  if (splt.length > 1) {
-    return splt[splt.length -2] + "." + splt[splt.length-1];
-  }
-  return d
-}
-
+// convenience function to pre-populate the extension with the domain of the current tab
 function populateCurrentDomain() {
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
   		try {
@@ -126,9 +125,6 @@ function populateCurrentDomain() {
   		  var url = new URL(tab.url);
   		  var domain = url.hostname;
   		  console.log("found domain: " + domain);
-        // gen = generalizeDomain(domain);
-        // console.log("generalized to domain: " + gen);
-        // document.querySelector("#domainFilter").value = gen;
         document.querySelector("#domainFilter").value = domain;
         lookupCookies()
       } catch(error) {
@@ -137,16 +133,8 @@ function populateCurrentDomain() {
 	})
 }
 
-function escapeHtml(unsafe) {
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
- }
 
-
+// remove all rows from the main cookie table
 function clearCookies() {
   var count = 0;
   var table = document.querySelector("#cookiebox");
@@ -154,19 +142,9 @@ function clearCookies() {
     table.deleteRow(table.rows.length - 1);
     count += 1
   }
-
-  console.log("deleted " + count + " rows.");
 }
 
-
-
-function cookieToId(cookie) {
-  return (cookie.name == undefined ? "" : cookie.name) + 
-  (cookie.domain  == undefined ? "" : cookie.domain) + 
-  (cookie.path  == undefined ? "" : cookie.path) + (cookie.secure  == undefined ? "" : cookie.secure) 
-}
-
-
+// allow a users to delete all cookies visible (in the cache)
 function deleteAllCookies() {
   if (window.confirm("delete all cookies visible?")) {
     for (var i in cache) {
@@ -177,11 +155,14 @@ function deleteAllCookies() {
 }
 
 
+// expose section to create a new cookie
 function newCookieVisible() {
   console.log("making cookie section visible");
   document.querySelector("#cookiecreatediv").hidden = false;
 }
 
+
+// reset all fields in the 'new cookie' section
 function cleanNewCookieFields() {
     document.querySelector("#newcookiename").value = "";
     document.querySelector("#newcookiedomain").value = "";
@@ -195,6 +176,7 @@ function cleanNewCookieFields() {
 }
 
 
+// grab the 'new cookie' section and submit values to chrome api - includes a callback which clears the 'new cookie' section
 function createNewCookie() {
 
   var newName = document.querySelector("#newcookiename").value;
@@ -216,6 +198,13 @@ function createNewCookie() {
   
 
 
+/* 
+This function is a monster, and should be refactored
+
+It takes a cookie and adds it to the main table, laying 
+out the values, ids and callbacks for actions taken 
+on the cookie post rendering
+*/
 
 function cookieToHtml(cookie, rownum) {
     
@@ -225,14 +214,7 @@ function cookieToHtml(cookie, rownum) {
     var boolCols = [cookie.secure, cookie.httpOnly];
     var boolColids = ['secure', 'httponly'];
 
-    var stripeColor = "#ffffff";
-
-    if (rownum % 2 == 0) {
-      stripeColor = "#e6e6e6";
-    }
-    
     var table = document.querySelector("#cookiebox");
-
       
       for (var i in cols) {
 
@@ -267,7 +249,6 @@ function cookieToHtml(cookie, rownum) {
       	
       	cell.appendChild(div)
       	div.appendChild(input);
-        
         
 
         if (colids[i] == 'value') {
@@ -314,12 +295,6 @@ function cookieToHtml(cookie, rownum) {
               }
           }
           
-
-
-          // url decode
-
-
-
           // from base64
           var decodeButton = document.createElement("button")
           decodeButton.innerText = "\u{2190}b64";
@@ -356,14 +331,9 @@ function cookieToHtml(cookie, rownum) {
           cell.appendChild(urlEncodeButton);
           cell.appendChild(urlDecodeButton);
           
-          
           input.value = cols[i];  
 
-
-
-
         }
-
       }
 
       // new row for booleans:
@@ -397,9 +367,6 @@ function cookieToHtml(cookie, rownum) {
       var row = table.insertRow(-1);
       var cell = row.insertCell(-1);
       
-      
-    
-      
       // delete button
       var cell = row.insertCell(-1);
       var div = document.createElement("div");
@@ -415,11 +382,9 @@ function cookieToHtml(cookie, rownum) {
 
 
       // save button
-      // var cell = row.insertCell(-1);      
       var saveButton = document.createElement("button");
       saveButton.innerText = "\u{1F4BE}";
       saveButton.onclick = function() {
-        //deleteCookie(cookie);
         newName = document.querySelector("#name" + rownum).value;
         newDomain =  document.querySelector("#domain" + rownum).value;
         newValue =  document.querySelector("#value" + rownum).value;
@@ -441,17 +406,16 @@ function cookieToHtml(cookie, rownum) {
       var cell = row.insertCell(-1);
       var hr = document.createElement("hr")
       cell.appendChild(hr);
-      
-
-
+    
 }
 
+
 function renderCookie(cookie, rownum) {
-  //console.log(cookie);
    cookieToHtml(cookie, rownum)
 }
 
 
+// convenience string matcher
 function isFilterMatch(testvalue, filter) {
 	// console.log("testing " + testvalue + " against " + filter)
 	if (testvalue == undefined || filter == undefined) {
@@ -461,10 +425,10 @@ function isFilterMatch(testvalue, filter) {
 	return testvalue.toLowerCase().indexOf(filter.toLowerCase()) >= 0;
 }
 
-
+// allows for the cookie+value filter to operate on cached responses from the chrome api
 function renderCookiesFromCache(predicate) {
-  console.log("entering cookie re-render");
-   var cookieCount = 0;
+  
+  var cookieCount = 0;
  
   clearCookies();
   for (var i in cache) {
@@ -478,11 +442,16 @@ function renderCookiesFromCache(predicate) {
    }
   }
 
+  if (cookieCount == 0) {
+    messageToWindow("no cookies found for this scope + filter");
+  }
+
   document.querySelector("#filtercount").innerText =  cookieCount +  " cookie(s) matched filter\n";
 
 }
 
 
+// populates the cache with the response from the chrome api on a get call
 function ingestWithDomainFilter(cookies, domainFilter) {
  cache = []
  var cookieCount = 0;
@@ -507,21 +476,24 @@ function ingestWithDomainFilter(cookies, domainFilter) {
       }
   
     }
+
    document.querySelector("#cookiecount").innerText = "found " + cookieCount + " cookie(s) in scope\n" +  "found " + subCookieCount + " matching subdomain\n";
-  renderCookiesFromCache(document.querySelector('#cookieFilter').value);
+   renderCookiesFromCache(document.querySelector('#cookieFilter').value);
 }
 
 
-
+// sort by domain first, then name descending order
 function cookieSort(cookieArray) {
   cookieArray.sort((a, b) => (a.domain + a.name> b.domain + b.name) ? -1 : 1)
 }
 
+// re-render main parts of window with a fresh cookie lookup
 function onChangeState() {
 	clearCookies();
   lookupCookies();
 }
 
+// api wrapper to get all cookies and pass them onto caching filter
 function lookupCookies() {
 	filter = document.querySelector("#domainFilter").value
 	chrome.cookies.getAll({}, function(cookies) {

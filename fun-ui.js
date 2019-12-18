@@ -4,13 +4,13 @@ function onload() {
   populateCurrentDomain()
   var ENTER = 13;
 
+
+  // capture enter key for default action = search
   window.onkeydown = function(event) {
     if (event.keyCode == ENTER) {
       onChangeState();
     } 
   } 
-  // run lookup
-
 }
 
 document.addEventListener('DOMContentLoaded', function() {
