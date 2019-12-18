@@ -10,10 +10,10 @@ I don't trust many extensions which can read/write sensitive data from the brows
 - base64 & url encode/decode helpers
 - smart search+filter within domain scope
 
-![](screeny.png)
+![](screeny2.png)
 
 ## Get it from the extensions store (or just install yourself)
 If you're extra paranoid about supply-chain attacks, review the code here, clone, and install as an unpacked extension locally
-![](enable-developer-mode.png)
+![](enable-developer-mode2.png)
 
 
