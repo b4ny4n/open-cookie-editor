@@ -1,37 +1,19 @@
-## Welcome to GitHub Pages
+# Open Cookie Editor
+![](images/open-cookie-editor-128.png)
 
-You can use the [editor on GitHub](https://github.com/b4ny4n/open-cookie-editor/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+## A chromium cookie editor you can trust
+I don't trust many extensions which can read/write sensitive data from the browser, so I decided to write my own and open source the code. The codebase is intentionally small, offering a minimalist cookie editor which can be source-code reviewed in a few minutes.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Some (hopefully) useful features
+- edit/delete all aspects of existing cookies
+- create new cookies
+- base64 & url encode/decode helpers
+- smart search+filter within domain scope
 
-### Markdown
+![](screeny.png)
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## Get it from the extensions store (or just install yourself)
+If you're extra paranoid about supply-chain attacks, review the code here, clone, and install as an unpacked extension locally
+![](enable-developer-mode.png)
 
-```markdown
-Syntax highlighted code block
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/b4ny4n/open-cookie-editor/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
