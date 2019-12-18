@@ -1,0 +1,21 @@
+{
+    "name": "Open Cookie Editor",
+    "version": "1.0",
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "permissions": [ "cookies", "http://*/*", "https://*/*" ],
+    "icons": {
+      "16": "images/open-cookie-editor-16.png",
+      "32": "images/open-cookie-editor-32.png",
+      "48": "images/open-cookie-editor-48.png",
+      "128": "images/open-cookie-editor-128.png"
+    },
+    "browser_action": {
+      "default_icon": "images/open-cookie-editor-128.png",
+      "default_popup": "window.html"
+    },
+    "description": "An open-source, minimalist cookie editor for chromium browsers.",
+    "manifest_version": 2
+  }

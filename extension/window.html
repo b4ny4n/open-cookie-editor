@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+      <style>
+
+      	html {overflow-y: scroll; padding: 10px}
+
+        button {
+          outline: none;
+          margin: 5px;
+        }
+
+    .countbox {
+      font-style: italic;
+    }
+
+		table.fixed {
+      table-layout:fixed; 
+      width:550px;
+      word-break:break-all;
+    }
+
+		table.fixed td {overflow:hidden; text-align: center; padding:5px;}
+		
+    table.fixed td:nth-of-type(1) {width:80px; text-align: right; vertical-align: top; padding-top: 8px}
+		table.fixed td:nth-of-type(2) {width:470px; text-align: left}
+
+    .tinybutton {
+      font-size: 8pt;
+    }
+
+    textarea.name {
+      font-weight: bold;
+    }
+
+
+		.flex-container {
+		  display: flex;
+		}
+    .flex-container-right {
+      display: flex;
+      text-align: right;
+    }
+
+
+		.fill-width {
+  		  flex: 1;
+		}
+
+    .status {
+      background-color: #e6e6e6;
+      border-color: black;
+      border-width: 1px;
+      border-style: solid;
+      padding: 10px;
+      overflow: hidden;
+      position: fixed;
+      top: 50px;
+      width: 70%;
+    }
+
+    
+
+      </style>
+        <script src="fun-ui.js"></script>
+        <script src="fun.js"></script>
+
+    </head>
+    
+    <body>
+      <div id="menu" align="right">
+      
+      <label for="domainFilter">request scope</label>
+    	<input id="domainFilter" size=35></input>
+      <br>
+      <label for="cookieFilter">filter cookie name/value</label>
+      <input id="cookieFilter" size=35></input>
+      <br>
+      <button id="search">search</button>
+      <button id="makecookiebutton">new cookie</button>
+      <a href="#" id="deleteall">delete all visible</a>
+      </div>
+      
+
+      <div id="cookiecreatediv" hidden=true>
+        <p><strong>create a cookie:</strong> </p>
+        <table id="cookiecreate" class="fixed ">
+          <tr><td>name</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiename"></textarea></div></td></tr>
+          <tr><td>domain</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiedomain"></textarea></div></td></tr>
+          <tr><td>value</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookievalue"></textarea></div></td></tr>
+          <tr><td>path</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiepath"></textarea></div></td></tr>
+          <tr><td>samesite</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookiesamesite"></textarea></div></td></tr>
+          <tr><td>expiration</td><td><div class="flex-container"><textarea class="fill-width" rows=1 id="newcookieexpiration"></textarea></div></td></tr>
+          <tr><td>flags</td><td><label class="checkbox-inline" for="newcookiesecure">secure</label><input rows=1 id="newcookiesecure" type="checkbox"></input><label  class="checkbox-inline" for="newcookiehttponly">httponly</label><input id="newcookiehttponly" type="checkbox"></input></td></tr>
+          <tr><td></td><td><button id="createcookiebutton">create</button><button id="cancelcookiebutton">cancel</button></td></tr>
+          
+      </table>
+    
+    </div>
+
+  <hr>
+    
+    
+      <div id="status" class="status" hidden=true></div>
+    
+
+    <div id="cookiecount" class="countbox"></div>
+    <div id="filtercount" class="countbox"></div>
+    <br />
+        
+
+      <table id="cookiebox" class="fixed">
+      </table>
+    </body>
+    
+
+  </html>
