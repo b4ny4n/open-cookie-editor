@@ -1,9 +1,8 @@
 {
     "name": "Open Cookie Editor",
-    "version": "1.0",
+    "version": "1.1",
     "background": {
-      "scripts": ["background.js"],
-      "persistent": false
+      "service_worker": "background.js"
     },
     "permissions": [ "cookies", "http://*/*", "https://*/*" ],
     "icons": {
